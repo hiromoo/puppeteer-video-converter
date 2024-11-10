@@ -15,13 +15,13 @@ Google Chrome の開発者ツールを開き、レコーダー機能を使用し
 以下のコマンドを実行して JSON ファイルを動画に変換します。
 
 ```sh
-npm start {/path/to/record.json}
+npm start /path/to/record.json
 ```
 
 JSON ファイルのあるディレクトリを指定して、複数の JSON ファイルを一括で変換することもできます。
 
 ```sh
-npm start {/path/to/directory}
+npm start /path/to/directory
 ```
 
 ### 3. その他のオプション
@@ -29,5 +29,5 @@ npm start {/path/to/directory}
 その他のオプションは以下のコマンドで確認することができます。
 
 ```sh
-npm run help
+npm start -- -h
 ```

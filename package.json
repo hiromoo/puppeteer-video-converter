@@ -4,8 +4,7 @@
   "main": "index.js",
   "scripts": {
     "prestart": "tsc",
-    "start": "node --import tsx/esm src/index.ts",
-    "help": "npm run prestart && node --import tsx/esm src/index.ts -h"
+    "start": "node --import tsx/esm src/index.ts"
   },
   "author": "",
   "license": "ISC",
