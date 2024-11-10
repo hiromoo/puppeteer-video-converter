@@ -6,10 +6,10 @@ import path from 'path';
 import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder';
 import { version } from '../package.json';
 
-const run = async (inputPath: string, outputDirPath: string, sleepTime: number, headless: boolean) => {
+const run = async (inputPath: string, outputDirPath: string, sleepTime: number, headful: boolean) => {
     const runRecording = async (flow: UserFlow, outputPath: string) => {
         const browser = await puppeteer.launch({
-            headless: headless,
+            headless: !headful,
         });
 
         const page = await browser.newPage();
@@ -29,7 +29,7 @@ const run = async (inputPath: string, outputDirPath: string, sleepTime: number, 
             }
         }
 
-        const runner = await createRunner(flow, new Extension(browser, page, { timeout: 30000 }));
+        const runner = await createRunner(flow, new Extension(browser, page));
 
         await runner.run();
 
@@ -70,9 +70,9 @@ const run = async (inputPath: string, outputDirPath: string, sleepTime: number, 
     parser.add_argument('input_path', { help: 'path to the recording file or directory' });
     parser.add_argument('--output_dir_path', { default: './videos', help: 'path to the output directory' });
     parser.add_argument('--sleep_time', { type: 'int', default: 3000, help: 'sleep time between steps' });
-    parser.add_argument('--headless', { action: 'store_true', help: 'run in headless mode' });
+    parser.add_argument('--headful', { action: 'store_true', help: 'run in headful mode' });
 
     const args = parser.parse_args();
 
-    await run(args.input_path, args.output_dir_path, args.sleep_time, args.headless);
+    await run(args.input_path, args.output_dir_path, args.sleep_time, args.headful);
 })();
