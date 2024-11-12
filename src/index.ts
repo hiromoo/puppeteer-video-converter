@@ -6,7 +6,36 @@ import path from 'path';
 import { PuppeteerScreenRecorder } from 'puppeteer-screen-recorder';
 import { version } from '../package.json';
 
-const run = async (inputPath: string, outputDirPath: string, sleepTime: number, headful: boolean) => {
+const run = async (
+    inputPath: string,
+    ignoreNavigation: boolean,
+    outputDirPath: string,
+    sleepTime: number,
+    headful: boolean,
+    preFlowPath?: string,
+) => {
+    class Extension extends PuppeteerRunnerExtension {
+        async beforeAllSteps(flow?: UserFlow) {
+            if (preFlowPath) {
+                const preUserFlow = getUserFlow(preFlowPath);
+                for (const step of preUserFlow.steps) {
+                    await this.runStep(step, flow);
+                }
+                await this.sleep(sleepTime);
+            }
+        }
+
+        async afterEachStep(step: Step, _flow?: UserFlow) {
+            if (step.type !== 'setViewport') {
+                await this.sleep(sleepTime);
+            }
+        }
+
+        private async sleep(ms: number) {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+        }
+    }
+
     const runRecording = async (flow: UserFlow, outputPath: string) => {
         const browser = await puppeteer.launch({
             headless: !headful,
@@ -17,19 +46,15 @@ const run = async (inputPath: string, outputDirPath: string, sleepTime: number, 
         const recorder = new PuppeteerScreenRecorder(page);
         await recorder.start(outputPath);
 
-        class Extension extends PuppeteerRunnerExtension {
-            async afterEachStep(step: Step, _flow?: UserFlow) {
-                if (step.type !== 'setViewport') {
-                    await this.sleep(sleepTime);
+        const runner = await createRunner(
+            ignoreNavigation
+                ? {
+                    ...flow,
+                    steps: flow.steps.filter((step) => step.type !== 'navigate')
                 }
-            }
-
-            private async sleep(ms: number) {
-                return new Promise((resolve) => setTimeout(resolve, ms));
-            }
-        }
-
-        const runner = await createRunner(flow, new Extension(browser, page));
+                : flow,
+            new Extension(browser, page)
+        );
 
         await runner.run();
 
@@ -68,11 +93,20 @@ const run = async (inputPath: string, outputDirPath: string, sleepTime: number, 
     parser.add_argument('-v', '--version', { action: 'version', version: version });
 
     parser.add_argument('input_path', { help: 'path to the recording file or directory' });
+    parser.add_argument('--pre_flow_path', { type: 'str', help: 'path to the pre-flow file' });
+    parser.add_argument('--ignore_navigation', { action: 'store_true', help: 'ignore navigation steps in the input file' });
     parser.add_argument('--output_dir_path', { default: './videos', help: 'path to the output directory' });
     parser.add_argument('--sleep_time', { type: 'int', default: 3000, help: 'sleep time between steps' });
     parser.add_argument('--headful', { action: 'store_true', help: 'run in headful mode' });
 
     const args = parser.parse_args();
 
-    await run(args.input_path, args.output_dir_path, args.sleep_time, args.headful);
+    await run(
+        args.input_path,
+        args.ignore_navigation,
+        args.output_dir_path,
+        args.sleep_time,
+        args.headful,
+        args.pre_flow_path
+    );
 })();
