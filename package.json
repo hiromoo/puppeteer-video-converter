@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "prestart": "tsc",
+    "prestart": "npm install && tsc",
     "start": "node dist/src/index.js"
   },
   "author": "",
