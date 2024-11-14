@@ -14,29 +14,38 @@ const run = async (
     headful: boolean,
     preFlowPath?: string,
 ) => {
-    class Extension extends PuppeteerRunnerExtension {
-        async beforeAllSteps(flow?: UserFlow) {
-            if (preFlowPath) {
-                const preUserFlow = getUserFlow(preFlowPath);
-                for (const step of preUserFlow.steps) {
-                    await this.runStep(step, flow);
+    const runRecording = async (flow: UserFlow, outputPath: string) => {
+        class Extension extends PuppeteerRunnerExtension {
+            #recorder?: PuppeteerScreenRecorder;
+
+            async beforeAllSteps(flow?: UserFlow) {
+                if (preFlowPath) {
+                    const preUserFlow = getUserFlow(preFlowPath);
+                    for (const step of preUserFlow.steps) {
+                        await this.runStep(step, flow);
+                    }
                 }
                 await this.sleep(sleepTime);
+
+                this.#recorder = new PuppeteerScreenRecorder(this.page);
+                await this.#recorder.start(outputPath);
+            }
+
+            async afterEachStep(step: Step, _flow?: UserFlow) {
+                if (step.type !== 'setViewport') {
+                    await this.sleep(sleepTime);
+                }
+            }
+
+            async afterAllSteps(_flow?: UserFlow) {
+                await this.#recorder!.stop();
+            }
+
+            private async sleep(ms: number) {
+                return new Promise((resolve) => setTimeout(resolve, ms));
             }
         }
 
-        async afterEachStep(step: Step, _flow?: UserFlow) {
-            if (step.type !== 'setViewport') {
-                await this.sleep(sleepTime);
-            }
-        }
-
-        private async sleep(ms: number) {
-            return new Promise((resolve) => setTimeout(resolve, ms));
-        }
-    }
-
-    const runRecording = async (flow: UserFlow, outputPath: string) => {
         const browser = await puppeteer.launch({
             headless: !headful,
         });
