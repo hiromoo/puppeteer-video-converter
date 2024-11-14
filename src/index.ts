@@ -26,9 +26,11 @@ const run = async (
                     }
                 }
                 await this.sleep(sleepTime);
-
+                
                 this.#recorder = new PuppeteerScreenRecorder(this.page);
                 await this.#recorder.start(outputPath);
+
+                await this.sleep(sleepTime);
             }
 
             async afterEachStep(step: Step, _flow?: UserFlow) {
