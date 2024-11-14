@@ -52,9 +52,6 @@ const run = async (
 
         const page = await browser.newPage();
 
-        const recorder = new PuppeteerScreenRecorder(page);
-        await recorder.start(outputPath);
-
         const runner = await createRunner(
             ignoreNavigation
                 ? {
