@@ -11,6 +11,7 @@ const run = async (
     ignoreNavigation: boolean,
     outputDirPath: string,
     sleepTime: number,
+    preFlowSleepTime: number,
     headful: boolean,
     preFlowPath?: string,
 ) => {
@@ -23,10 +24,11 @@ const run = async (
                     const preUserFlow = getUserFlow(preFlowPath);
                     for (const step of preUserFlow.steps) {
                         await this.runStep(step, flow);
+                        await this.sleep(preFlowSleepTime);
                     }
                 }
                 await this.sleep(sleepTime);
-                
+
                 this.#recorder = new PuppeteerScreenRecorder(this.page);
                 await this.#recorder.start(outputPath);
 
@@ -105,6 +107,7 @@ const run = async (
     parser.add_argument('--ignore_navigation', { action: 'store_true', help: 'ignore navigation steps in the input file' });
     parser.add_argument('--output_dir_path', { default: './videos', help: 'path to the output directory' });
     parser.add_argument('--sleep_time', { type: 'int', default: 3000, help: 'sleep time between steps' });
+    parser.add_argument('--pre_flow_sleep_time', { type: 'int', default: 0, help: 'sleep time between pre-flow steps' });
     parser.add_argument('--headful', { action: 'store_true', help: 'run in headful mode' });
 
     const args = parser.parse_args();
@@ -114,6 +117,7 @@ const run = async (
         args.ignore_navigation,
         args.output_dir_path,
         args.sleep_time,
+        args.pre_flow_sleep_time,
         args.headful,
         args.pre_flow_path
     );
